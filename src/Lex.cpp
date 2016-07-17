@@ -1,0 +1,358 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "Stack.h"
+#include "Exception.h"
+
+#include "Lex.h"
+
+
+int IsDigit(int c)
+{
+	if ((c>='0')&&(c<='9'))
+		return 1;
+	else
+		return 0;
+}
+
+
+int IsSeparator(int c)
+{
+	switch(c)
+	{
+		case'+':
+		case'-':
+		case'*':
+		case'/':
+		case'%':
+		case'<':
+		case'>':
+		case'=':
+		case'&':
+		case'|':
+		case'!':
+		case',':
+		case':':
+		case'[':
+		case']':
+		case'{':
+		case'}':
+		case'(':
+		case')':
+		case'#':
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+
+int IsLetter(int c)
+{
+	if (((c>='a')&&(c<='z')) || ((c>='A')&&(c<='Z')))
+		return 1;
+	else
+		return 0;
+}
+
+
+int IsID(int c)
+{
+	if ( (c=='?') || (c=='@') || (c=='$') )
+		return 1;
+	else
+		return 0;
+}
+
+
+int IsIntegratedOperator(char *str)
+{
+	if (!strcmp("turn",  str) ||
+		!strcmp("prod",  str) ||
+		!strcmp("buy" ,  str) ||
+		!strcmp("sell",  str) ||
+		!strcmp("build", str) )
+		return 1;
+	else
+		return 0;
+}
+
+
+int IsComparison(char *str)
+{
+	if (!strcmp("<",  str) ||
+		!strcmp(">",  str) ||
+		!strcmp("=", str) )
+		return 1;
+	else
+		return 0;
+}
+
+
+Lexeme *LexAnalyser::MakeNewLexeme(int type)
+{
+	Lexeme *tmp;
+
+	tmp = new Lexeme;
+	tmp->type = type;
+	tmp->line_number = lines_count;
+	buf[buf_index]='\0';
+	tmp->string = strndup(buf, buf_index);
+	tmp->next = 0;
+	buf_index=0;
+
+	return tmp;
+}
+
+
+void LexAnalyser::FreeLexemesList(Lexeme *head)
+{
+	if (head)
+	{
+		FreeLexemesList(head->next);
+		if (head->string)
+			free(head->string);
+		delete head;
+	}
+}
+
+
+void LexAnalyser::CopyStackToList()
+{
+	Lexeme *new_lexeme;
+
+	stack_memory.Pop(new_lexeme);
+	while(new_lexeme)
+	{
+		new_lexeme->next = lexemes;
+		lexemes = new_lexeme;
+		stack_memory.Pop(new_lexeme);
+	}
+}
+
+
+void LexAnalyser::AnalyseZero(int c)
+{
+	if (IsDigit(c))
+	{
+		buf[buf_index++]=c;
+		SetState(num);
+	}
+	else if (IsLetter(c))
+	{
+		buf[buf_index++]=c;
+		SetState(keyword);
+	}
+	else if (IsID(c))
+	{
+		buf[buf_index++]=c;
+		SetState(identificator);
+	}
+	else if (c=='"')
+	{
+		buf[buf_index++]=c;
+		SetState(string);
+	}
+	else if (c=='#')
+		SetState(comment);
+	else if (c=='\n')
+		lines_count++;
+	else if ( (c==' ') || (c=='\t') )
+	{}
+	else if (IsSeparator(c))
+	{
+		buf[buf_index++]=c;
+		stack_memory.Push(MakeNewLexeme(keyword));
+	}
+	else if (c == EOF)
+		throw 666;
+	else
+		throw IllegalSymbol(c, lines_count);
+}
+
+
+void LexAnalyser::AnalyseNum(int c)
+{
+	if (IsDigit(c))
+		buf[buf_index++]=c;
+	else if (c=='\n')
+	{
+		stack_memory.Push(MakeNewLexeme(num));
+		lines_count++;
+		SetState(0);
+	}
+	else if ((c==' ') || (c=='\t'))
+	{
+		stack_memory.Push(MakeNewLexeme(num));
+		SetState(0);
+	}
+	else if (c=='#')
+	{
+		stack_memory.Push(MakeNewLexeme(num));
+		SetState(comment);
+	}
+	else if (IsSeparator(c))
+	{
+		stack_memory.Push(MakeNewLexeme(num));
+		buf[buf_index++]=c;
+		stack_memory.Push(MakeNewLexeme(keyword));
+		SetState(0);
+	}
+	else
+		throw IllegalSymbol(c, lines_count);
+}
+
+
+void LexAnalyser::AnalyseString(int c)
+{
+	if (c!='"')
+		buf[buf_index++]=c;
+	else
+	{
+		buf[buf_index++]=c;
+		stack_memory.Push(MakeNewLexeme(string));
+		SetState(0);
+	}
+}
+
+
+void LexAnalyser::AnalyseIdentificator(int c)
+{
+	if (IsLetter(c) || IsDigit(c) || (c=='_'))
+		buf[buf_index++]=c;
+	else if (c=='\n')
+	{
+		stack_memory.Push(MakeNewLexeme(identificator));
+		lines_count++;
+		SetState(0);
+	}
+	else if ((c==' ') || (c=='\t'))
+	{
+		stack_memory.Push(MakeNewLexeme(identificator));
+		SetState(0);
+	}
+	else if (c=='#')
+	{
+		stack_memory.Push(MakeNewLexeme(identificator));
+		SetState(comment);
+	}
+	else if (IsSeparator(c))
+	{
+		stack_memory.Push(MakeNewLexeme(identificator));
+		buf[buf_index++]=c;
+		stack_memory.Push(MakeNewLexeme(keyword));
+		SetState(0);
+	}
+	else
+		throw IllegalSymbol(c, lines_count);
+}
+
+
+void LexAnalyser::AnalyseKeyword(int c)
+{
+	if (IsLetter(c))
+		buf[buf_index++]=c;
+	else if (c=='\n')
+	{
+		stack_memory.Push(MakeNewLexeme(keyword));
+		lines_count++;
+		SetState(0);
+	}
+	else if ((c==' ') || (c=='\t'))
+	{
+		stack_memory.Push(MakeNewLexeme(keyword));
+		SetState(0);
+	}
+	else if (c=='#')
+	{
+		stack_memory.Push(MakeNewLexeme(keyword));
+		SetState(comment);
+	}
+	else if (IsSeparator(c))
+	{
+		stack_memory.Push(MakeNewLexeme(keyword));
+		buf[buf_index++]=c;
+		stack_memory.Push(MakeNewLexeme(keyword));
+		SetState(0);
+	}
+	else
+		throw IllegalSymbol(c, lines_count);
+}
+
+
+void LexAnalyser::AnalyseComment(int c)
+{
+	if (c == '#')
+		SetState(0);
+}
+
+
+void LexAnalyser::SwitchState(int c)
+{
+	if (state == 0)
+		AnalyseZero(c);
+	else if (state == num)
+		AnalyseNum(c);
+	else if (state == string)
+		AnalyseString(c);
+	else if (state == identificator)
+		AnalyseIdentificator(c);
+	else if (state == keyword)
+		AnalyseKeyword(c);
+	else if (state == comment)
+		AnalyseComment(c);
+}
+
+
+void LexAnalyser::PrintLexemes()
+{
+	Lexeme *tmp = lexemes;
+
+	while (tmp)
+	{
+		fprintf(stderr, "%d: %s\n",tmp->line_number, tmp->string);
+		tmp = tmp->next;
+	}
+}
+
+
+void LexAnalyser::Run()
+{
+	int c;
+
+	while(true)
+	{
+		try
+		{
+			SwitchState(c=getchar());
+		}
+
+		catch(const SyntaxEx& info)
+		{
+			info.Print();
+			exit(0);
+		}
+		catch(...)
+		{
+			CopyStackToList();
+			break;
+		}
+	}
+}
+
+
+LexAnalyser::LexAnalyser()
+{
+	state = 0;
+	lexemes = 0;
+	lines_count = 1;
+	buf_index = 0;
+}
+
+
+LexAnalyser::~LexAnalyser()
+{
+	FreeLexemesList(lexemes);
+}
+
