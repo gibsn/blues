@@ -22,10 +22,11 @@ class Stack
 	static void DeleteStack(StackElement<T> *head);
 
 public:
-	void Pop(T *&dest);
-	void Push(T *data);
 	Stack();
 	~Stack();
+
+	void Pop(T *&dest);
+	void Push(T *data);
 };
 
 

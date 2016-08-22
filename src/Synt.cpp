@@ -2,11 +2,12 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "Common.h"
 #include "Exception.h"
 #include "Interpretator.h"
-#include "Poliz.h"
 #include "Lex.h"
 #include "LabelTable.h"
+#include "Poliz.h"
 
 #include "Synt.h"
 

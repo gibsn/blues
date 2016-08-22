@@ -51,19 +51,12 @@ class LexAnalyser
 	void PrintLexemes();
 
 public:
-	void Run();
-	Lexeme *GetLexemesHead() const { return lexemes; }
 	LexAnalyser();
 	~LexAnalyser();
+
+	void Run();
+	Lexeme *GetLexemesHead() const { return lexemes; }
 };
-
-
-int IsDigit(int c);
-int IsSeparator(int c);
-int IsLetter(int c);
-int IsID(int c);
-int IsIntegratedOperator(char *str);
-int IsComparison(char *str);
 
 
 #endif

@@ -7,89 +7,6 @@
 
 #include "Lex.h"
 
-
-int IsDigit(int c)
-{
-	if ((c>='0')&&(c<='9'))
-		return 1;
-	else
-		return 0;
-}
-
-
-int IsSeparator(int c)
-{
-	switch(c)
-	{
-		case'+':
-		case'-':
-		case'*':
-		case'/':
-		case'%':
-		case'<':
-		case'>':
-		case'=':
-		case'&':
-		case'|':
-		case'!':
-		case',':
-		case':':
-		case'[':
-		case']':
-		case'{':
-		case'}':
-		case'(':
-		case')':
-		case'#':
-			return 1;
-		default:
-			return 0;
-	}
-}
-
-
-int IsLetter(int c)
-{
-	if (((c>='a')&&(c<='z')) || ((c>='A')&&(c<='Z')))
-		return 1;
-	else
-		return 0;
-}
-
-
-int IsID(int c)
-{
-	if ( (c=='?') || (c=='@') || (c=='$') )
-		return 1;
-	else
-		return 0;
-}
-
-
-int IsIntegratedOperator(char *str)
-{
-	if (!strcmp("turn",  str) ||
-		!strcmp("prod",  str) ||
-		!strcmp("buy" ,  str) ||
-		!strcmp("sell",  str) ||
-		!strcmp("build", str) )
-		return 1;
-	else
-		return 0;
-}
-
-
-int IsComparison(char *str)
-{
-	if (!strcmp("<",  str) ||
-		!strcmp(">",  str) ||
-		!strcmp("=", str) )
-		return 1;
-	else
-		return 0;
-}
-
-
 Lexeme *LexAnalyser::MakeNewLexeme(int type)
 {
 	Lexeme *tmp;
@@ -97,10 +14,12 @@ Lexeme *LexAnalyser::MakeNewLexeme(int type)
 	tmp = new Lexeme;
 	tmp->type = type;
 	tmp->line_number = lines_count;
-	buf[buf_index]='\0';
+
+	buf[buf_index] = '\0';
 	tmp->string = strndup(buf, buf_index);
+	buf_index = 0;
+
 	tmp->next = 0;
-	buf_index=0;
 
 	return tmp;
 }
@@ -108,11 +27,12 @@ Lexeme *LexAnalyser::MakeNewLexeme(int type)
 
 void LexAnalyser::FreeLexemesList(Lexeme *head)
 {
-	if (head)
-	{
+	if (head) {
 		FreeLexemesList(head->next);
+
 		if (head->string)
 			free(head->string);
+
 		delete head;
 	}
 }
@@ -123,8 +43,7 @@ void LexAnalyser::CopyStackToList()
 	Lexeme *new_lexeme;
 
 	stack_memory.Pop(new_lexeme);
-	while(new_lexeme)
-	{
+	while(new_lexeme) {
 		new_lexeme->next = lexemes;
 		lexemes = new_lexeme;
 		stack_memory.Pop(new_lexeme);
@@ -134,83 +53,66 @@ void LexAnalyser::CopyStackToList()
 
 void LexAnalyser::AnalyseZero(int c)
 {
-	if (IsDigit(c))
-	{
-		buf[buf_index++]=c;
+	if (IsDigit(c)) {
+		buf[buf_index++] = c;
 		SetState(num);
-	}
-	else if (IsLetter(c))
-	{
-		buf[buf_index++]=c;
+	} else if (IsLetter(c)) {
+		buf[buf_index++] = c;
 		SetState(keyword);
-	}
-	else if (IsID(c))
-	{
-		buf[buf_index++]=c;
+	} else if (IsID(c)) {
+		buf[buf_index++] = c;
 		SetState(identificator);
-	}
-	else if (c=='"')
-	{
-		buf[buf_index++]=c;
+	} else if (c == '"') {
+		buf[buf_index++] = c;
 		SetState(string);
-	}
-	else if (c=='#')
+	} else if (c == '#') {
 		SetState(comment);
-	else if (c=='\n')
+	} else if (c == '\n') {
 		lines_count++;
-	else if ( (c==' ') || (c=='\t') )
-	{}
-	else if (IsSeparator(c))
-	{
-		buf[buf_index++]=c;
+	} else if ( (c == ' ') || (c == '\t') ) {
+		//pass
+	} else if (IsSeparator(c)) {
+		buf[buf_index++] = c;
 		stack_memory.Push(MakeNewLexeme(keyword));
-	}
-	else if (c == EOF)
+	} else if (c == EOF) {
 		throw 666;
-	else
+	} else {
 		throw IllegalSymbol(c, lines_count);
+	}
 }
 
 
 void LexAnalyser::AnalyseNum(int c)
 {
-	if (IsDigit(c))
-		buf[buf_index++]=c;
-	else if (c=='\n')
-	{
+	if (IsDigit(c)) {
+		buf[buf_index++] = c;
+	} else if (c == '\n') {
 		stack_memory.Push(MakeNewLexeme(num));
 		lines_count++;
 		SetState(0);
-	}
-	else if ((c==' ') || (c=='\t'))
-	{
+	} else if ((c == ' ') || (c == '\t')) {
 		stack_memory.Push(MakeNewLexeme(num));
 		SetState(0);
-	}
-	else if (c=='#')
-	{
+	} else if (c == '#') {
 		stack_memory.Push(MakeNewLexeme(num));
 		SetState(comment);
-	}
-	else if (IsSeparator(c))
-	{
+	} else if (IsSeparator(c)) {
 		stack_memory.Push(MakeNewLexeme(num));
-		buf[buf_index++]=c;
+		buf[buf_index++] = c;
 		stack_memory.Push(MakeNewLexeme(keyword));
 		SetState(0);
-	}
-	else
+	} else {
 		throw IllegalSymbol(c, lines_count);
+	}
 }
 
 
 void LexAnalyser::AnalyseString(int c)
 {
-	if (c!='"')
-		buf[buf_index++]=c;
-	else
-	{
-		buf[buf_index++]=c;
+	if (c != '"') {
+		buf[buf_index++] = c;
+	} else {
+		buf[buf_index++] = c;
 		stack_memory.Push(MakeNewLexeme(string));
 		SetState(0);
 	}
@@ -219,65 +121,51 @@ void LexAnalyser::AnalyseString(int c)
 
 void LexAnalyser::AnalyseIdentificator(int c)
 {
-	if (IsLetter(c) || IsDigit(c) || (c=='_'))
-		buf[buf_index++]=c;
-	else if (c=='\n')
-	{
+	if (IsLetter(c) || IsDigit(c) || (c == '_')) {
+		buf[buf_index++] = c;
+	} else if (c == '\n') {
 		stack_memory.Push(MakeNewLexeme(identificator));
 		lines_count++;
 		SetState(0);
-	}
-	else if ((c==' ') || (c=='\t'))
-	{
+	} else if ((c == ' ') || (c == '\t')) {
 		stack_memory.Push(MakeNewLexeme(identificator));
 		SetState(0);
-	}
-	else if (c=='#')
-	{
+	} else if (c == '#') {
 		stack_memory.Push(MakeNewLexeme(identificator));
 		SetState(comment);
-	}
-	else if (IsSeparator(c))
-	{
+	} else if (IsSeparator(c)) {
 		stack_memory.Push(MakeNewLexeme(identificator));
-		buf[buf_index++]=c;
+		buf[buf_index++] = c;
 		stack_memory.Push(MakeNewLexeme(keyword));
 		SetState(0);
-	}
-	else
+	} else {
 		throw IllegalSymbol(c, lines_count);
+	}
 }
 
 
 void LexAnalyser::AnalyseKeyword(int c)
 {
-	if (IsLetter(c))
+	if (IsLetter(c)) {
 		buf[buf_index++]=c;
-	else if (c=='\n')
-	{
+	} else if (c == '\n') {
 		stack_memory.Push(MakeNewLexeme(keyword));
 		lines_count++;
 		SetState(0);
-	}
-	else if ((c==' ') || (c=='\t'))
-	{
+	} else if ((c == ' ') || (c == '\t')) {
 		stack_memory.Push(MakeNewLexeme(keyword));
 		SetState(0);
-	}
-	else if (c=='#')
-	{
+	} else if (c == '#') {
 		stack_memory.Push(MakeNewLexeme(keyword));
 		SetState(comment);
-	}
-	else if (IsSeparator(c))
-	{
+	} else if (IsSeparator(c)) {
 		stack_memory.Push(MakeNewLexeme(keyword));
-		buf[buf_index++]=c;
+		buf[buf_index++] = c;
 		stack_memory.Push(MakeNewLexeme(keyword));
 		SetState(0);
-	}
-	else
+	} else {
 		throw IllegalSymbol(c, lines_count);
+	}
 }
 
 
@@ -307,12 +195,11 @@ void LexAnalyser::SwitchState(int c)
 
 void LexAnalyser::PrintLexemes()
 {
-	Lexeme *tmp = lexemes;
+	Lexeme *iterator = lexemes;
 
-	while (tmp)
-	{
-		fprintf(stderr, "%d: %s\n",tmp->line_number, tmp->string);
-		tmp = tmp->next;
+	while (iterator) {
+		fprintf(stderr, "%d: %s\n",iterator->line_number, iterator->string);
+		iterator = iterator->next;
 	}
 }
 
@@ -321,20 +208,16 @@ void LexAnalyser::Run()
 {
 	int c;
 
-	while(true)
-	{
-		try
-		{
-			SwitchState(c=getchar());
+	while(true) {
+		try {
+			SwitchState(c = getchar());
 		}
 
-		catch(const SyntaxEx& info)
-		{
+		catch(const SyntaxEx& info) {
 			info.Print();
 			exit(0);
 		}
-		catch(...)
-		{
+		catch(...) {
 			CopyStackToList();
 			break;
 		}
@@ -343,11 +226,11 @@ void LexAnalyser::Run()
 
 
 LexAnalyser::LexAnalyser()
+	: lexemes(0),
+	state(0),
+	buf_index(0),
+	lines_count(0)
 {
-	state = 0;
-	lexemes = 0;
-	lines_count = 1;
-	buf_index = 0;
 }
 
 

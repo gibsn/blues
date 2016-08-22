@@ -77,3 +77,68 @@ Maintenance::~Maintenance()
 {
 	close(0);
 }
+
+
+bool IsDigit(int c)
+{
+	return (c >= '0') && (c <= '9');
+}
+
+
+bool IsSeparator(int c)
+{
+	switch(c)
+	{
+		case'+':
+		case'-':
+		case'*':
+		case'/':
+		case'%':
+		case'<':
+		case'>':
+		case'=':
+		case'&':
+		case'|':
+		case'!':
+		case',':
+		case':':
+		case'[':
+		case']':
+		case'{':
+		case'}':
+		case'(':
+		case')':
+		case'#':
+			return true;
+		default:
+			return false;
+	}
+}
+
+
+bool IsLetter(int c)
+{
+	return  ((c >= 'a') && (c <= 'z')) ||
+			((c >= 'A') && (c <= 'Z'));
+}
+
+
+bool IsID(int c)
+{
+	return (c == '?') ||
+		   (c == '@') ||
+		   (c == '$');
+}
+
+
+bool IsComparison(char *str)
+{
+	if (!strcmp("<",  str) ||
+		!strcmp(">",  str) ||
+		!strcmp("=", str) )
+		return true;
+	else
+		return false;
+}
+
+

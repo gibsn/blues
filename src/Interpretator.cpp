@@ -1,9 +1,11 @@
 #include <stdlib.h>
 
-#include "VarTable.h"
-#include "LabelTable.h"
 #include "Exception.h"
+#include "LabelTable.h"
+#include "Lex.h"
 #include "Poliz.h"
+#include "Synt.h"
+#include "VarTable.h"
 
 #include "Interpretator.h"
 
@@ -14,10 +16,17 @@ LabelTable Interpretator::label_table;
 
 void Interpretator::Run()
 {
-	cur_cmd = poliz_head;
-
 	try {
-		while(cur_cmd)
+		LexAnalyser lex;
+		SyntAnalyser synt;
+
+		lex.Run();
+		synt.Run(lex.GetLexemesHead());
+		poliz_head = synt.GetPolizHead();
+		PolizList *cur_cmd = poliz_head;
+
+		// now evaluate POLIZ
+		while (cur_cmd)
 			cur_cmd->element->Evaluate(poliz_stack, cur_cmd);
 	}
 	catch(const PolizEx& info) {

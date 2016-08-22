@@ -15,4 +15,11 @@ public:
 };
 
 
+bool IsDigit(int c);
+bool IsSeparator(int c);
+bool IsLetter(int c);
+bool IsID(int c);
+bool IsComparison(char *str);
+
+
 #endif
