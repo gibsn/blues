@@ -5,38 +5,16 @@
 
 
 VarTableRow::VarTableRow(const char *str, int i)
+	: name(0),
+	value(i),
+	next(0)
 {
 	if (str)
-		name = strndup(str, strlen(str));
-	else
-		name = 0;
+		name = strdup(str);
+#if 0
 	var_addr = new int;
 	*var_addr = i;
-	next = 0;
-}
-
-
-char *VarTableRow::GetName() const
-{
-	return name;
-}
-
-
-int *VarTableRow::GetVarAddr() const
-{
-	return var_addr;
-}
-
-
-VarTableRow *VarTableRow::GetNext() const
-{
-	return next;
-}
-
-
-void VarTableRow::SetNext(VarTableRow *new_row)
-{
-	next = new_row;
+#endif
 }
 
 
@@ -44,14 +22,16 @@ VarTableRow::~VarTableRow()
 {
 	if (name)
 		free(name);
+#if 0
 	if (var_addr)
 		delete var_addr;
+#endif
 }
 
 
 VarTable::VarTable()
+	: table_head(0)
 {
-	table_head = 0;
 }
 
 
@@ -64,23 +44,35 @@ void VarTable::AddNewVar(const char *new_name, int new_value)
 }
 
 
-int *VarTable::GetVarAddr(const char *name) const
+void VarTable::Assign(const char *name, int value)
 {
-	VarTableRow *tmp = table_head;
-	
-	while (tmp)
-		if (!strcmp(tmp->GetName(), name))
-			return tmp->GetVarAddr();
+	VarTableRow *variable = GetVarByName(name);
+
+	if (!variable)
+		AddNewVar(name, value);
+	else
+		variable->SetVariable(value);
+}
+
+
+VarTableRow *VarTable::GetVarByName(const char *name)
+{
+	VarTableRow *iterator = table_head;
+
+	while (iterator) {
+		if (!strcmp(iterator->GetName(), name))
+			return iterator;
 		else
-			tmp = tmp->GetNext();
+			iterator = iterator->GetNext();
+	}
+
 	return 0;
 }
 
 
 void VarTable::DeleteVarTable(VarTableRow *head)
 {
-	if (head)
-	{
+	if (head) {
 		DeleteVarTable(head->GetNext());
 		delete head;
 	}
@@ -91,19 +83,4 @@ VarTable::~VarTable()
 {
 	DeleteVarTable(table_head);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

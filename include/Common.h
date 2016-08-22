@@ -6,25 +6,13 @@ enum { buffer_size = 2048 };
 
 class Maintenance
 {
-	int port, sockfd, buf_length;
-	char ip[16], buf[buffer_size], name[buffer_size], program[buffer_size];
+	char program[buffer_size];
 
-	void ShlBuf(int i, int count);
 public:
-	int ProcessCmdArguments(int argc, char **argv);
-	int EstablishConnection();
-	void ProcessSelect();
-	int ReadMessage();
-	void SendMessage(const char* str);
-	int ExtractFromBuffer(char *dest);
-	void RealTimePrinting(const char *str);
+	bool ProcessCmdArguments(int argc, char **argv);
 	void RedirectToProg();
-	char *GetName();
-	int GetSockFd();
-	Maintenance();
 	~Maintenance();
 };
-
 
 
 #endif

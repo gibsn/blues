@@ -8,43 +8,12 @@
 
 
 LabelTableRow::LabelTableRow(char *str, PolizList *p)
+	: name(0),
+	addr(p),
+	next(0)
 {
 	if (str)
-		name = strndup(str, strlen(str));
-	else
-		name = 0;
-	addr = p;
-	next = 0;
-}
-
-
-char *LabelTableRow::GetName() const
-{
-	return name;
-}
-
-
-PolizList *LabelTableRow::GetAddr() const
-{
-	return addr;
-}
-
-
-LabelTableRow *LabelTableRow::GetNext() const
-{
-	return next;
-}
-
-
-void LabelTableRow::SetAddr(PolizList *p)
-{
-	addr = p;
-}
-
-
-void LabelTableRow::SetNext(LabelTableRow *new_row)
-{
-	next = new_row;
+		name = strdup(str);
 }
 
 
@@ -56,25 +25,27 @@ LabelTableRow::~LabelTableRow()
 
 
 LabelTable::LabelTable()
+	: table_head(0)
 {
-	table_head = 0;
 }
 
 
 void LabelTable::AddNewLabel(char *str, PolizList* addr1, int n)
 {
-	LabelTableRow *tmp = table_head;
+	LabelTableRow *iterator = table_head;
 
-	while(tmp)
-		if (!strcmp(tmp->GetName(), str))
-		{
-			if (tmp->GetAddr())
+	while(iterator) {
+		if (!strcmp(iterator->GetName(), str)) {
+			if (iterator->GetAddr())
 				throw DuplicateLabel(str, n);
-			tmp->SetAddr(addr1);
+
+			iterator->SetAddr(addr1);
 			return;
+		} else {
+			iterator = iterator->GetNext();
 		}
-		else
-			tmp = tmp->GetNext();
+	}
+
 	LabelTableRow *new_label = new LabelTableRow(str, addr1);
 	new_label->SetNext(table_head);
 	table_head = new_label;
@@ -83,21 +54,22 @@ void LabelTable::AddNewLabel(char *str, PolizList* addr1, int n)
 
 PolizList *LabelTable::GetLabelAddr(const char *name) const
 {
-	LabelTableRow *tmp = table_head;
+	LabelTableRow *iterator = table_head;
 
-	while(tmp)
-		if (!strcmp(tmp->GetName(), name))
-			return tmp->GetAddr();
+	while(iterator) {
+		if (!strcmp(iterator->GetName(), name))
+			return iterator->GetAddr();
 		else
-			tmp = tmp->GetNext();
+			iterator = iterator->GetNext();
+	}
+
 	return 0;
 }
 
 
 void LabelTable::DeleteLabelTable(LabelTableRow *head)
 {
-	if (head)
-	{
+	if (head) {
 		DeleteLabelTable(head->GetNext());
 		delete head;
 	}

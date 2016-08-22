@@ -156,16 +156,6 @@ public:
 };
 
 
-class UndefinedFunction : public PolizEx
-{
-
-public:
-	UndefinedFunction(const PolizOpDefFunction *func);
-	void Print() const;
-	~UndefinedFunction() {};
-};
-
-
 class DuplicateLabel : public PolizEx
 {
 
@@ -173,26 +163,6 @@ public:
 	DuplicateLabel(char *str, int n) : PolizEx(str, n) {};
 	void Print() const;
 	~DuplicateLabel() {};
-};
-
-
-class TooFewArguments : public PolizEx
-{
-
-public:
-	TooFewArguments(PolizOpDefFunction *func);
-	void Print() const;
-	~TooFewArguments() {};
-};
-
-
-class TooManyArguments : public PolizEx
-{
-
-public:
-	TooManyArguments(PolizOpDefFunction *func);
-	void Print() const;
-	~TooManyArguments() {};
 };
 
 

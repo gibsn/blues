@@ -73,9 +73,11 @@ class PolizInt : public PolizConst
 
 public:
 	PolizInt(int a);
-	PolizInt *Clone() const;
-	int GetVal() const;
 	~PolizInt() {};
+
+	int GetVal() const { return value; }
+
+	PolizInt *Clone() const;
 };
 
 
@@ -85,9 +87,11 @@ class PolizStr : public PolizConst
 
 public:
 	PolizStr(char *string);
-	PolizStr *Clone() const;
-	char *GetStr() const;
 	~PolizStr();
+
+	char *GetStr() const { return str; }
+
+	PolizStr *Clone() const;
 };
 
 
@@ -99,11 +103,13 @@ class PolizVar : public PolizConst
 
 public:
 	PolizVar(char *str, int n);
-	PolizVar *Clone() const;
-	char *GetName() const;
-	int GetLineNumber() const;
-	int *GetAddr() const;
 	~PolizVar();
+
+	char *GetName() const { return name; }
+	int GetLineNumber() const { return line_number; }
+	int *GetAddr() const { return addr; }
+
+	PolizVar *Clone() const;
 };
 
 
@@ -115,12 +121,14 @@ class PolizLabel : public PolizConst
 
 public:
 	PolizLabel(char *str, PolizList *addr1, int n);
-	PolizLabel *Clone() const;
-	PolizList *GetAddr() const;
-	int GetLineNumber() const;
-	char *GetName() const;
-	void SetAddr(PolizList *addr1);
 	~PolizLabel();
+
+	PolizList *GetAddr() const { return addr; }
+	int GetLineNumber() const { return line_number; }
+	char *GetName() const { return name; }
+	void SetAddr(PolizList *addr1) { addr = addr1; }
+
+	PolizLabel *Clone() const;
 };
 
 
@@ -128,56 +136,13 @@ class PolizPrint : public PolizFunction
 {
 	int argc;
 
+	static void PrintArgs(int n, Stack<PolizElem> &stack);
+
 public:
 	PolizPrint(int n);
-	static void PrintArgs(int n, Stack<PolizElem> &stack);
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizPrint() {};
-};
 
-
-class PolizTurn : public PolizFunction
-{
-
-public:
 	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
-	~PolizTurn() {};
-};
-
-
-class PolizBuild : public PolizFunction
-{
-
-public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
-	~PolizBuild() {};
-};
-
-
-class PolizProd : public PolizFunction
-{
-
-public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
-	~PolizProd() {};
-};
-
-
-class PolizBuy : public PolizFunction
-{
-
-public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
-	~PolizBuy() {};
-};
-
-
-class PolizSell : public PolizFunction
-{
-
-public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
-	~PolizSell() {};
 };
 
 
@@ -185,8 +150,9 @@ class PolizOpPlus : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpPlus() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
@@ -194,8 +160,9 @@ class PolizOpMinus : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpMinus() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
@@ -203,8 +170,9 @@ class PolizOpGreater : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpGreater() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
@@ -212,8 +180,9 @@ class PolizOpEqual : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpEqual() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
@@ -221,19 +190,19 @@ class PolizOpLess : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpLess() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
 class PolizOpDereference : public PolizFunction
 {
-	int line_number;
 
 public:
-	PolizOpDereference(int n);
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpDereference() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
@@ -241,8 +210,9 @@ class PolizOpAssign : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpAssign() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
@@ -250,8 +220,9 @@ class PolizOpNot : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpNot() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
@@ -259,8 +230,9 @@ class PolizOpMultiply : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpMultiply() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
@@ -268,8 +240,9 @@ class PolizOpDivide : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpDivide() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
@@ -277,8 +250,9 @@ class PolizOpUnMinus : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpUnMinus() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
@@ -287,8 +261,9 @@ class PolizOpAnd : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpAnd() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
@@ -296,8 +271,9 @@ class PolizOpOr : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpOr() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
@@ -305,8 +281,9 @@ class PolizOpIndex : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpIndex() {};
+
+	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 };
 
 
@@ -314,24 +291,9 @@ class PolizOpNOP : public PolizFunction
 {
 
 public:
-	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
 	~PolizOpNOP() {};
-};
 
-
-class PolizOpDefFunction : public PolizFunction
-{
-	char *name;
-	int line_number;
-	int argc;
-
-public:
-	PolizOpDefFunction(char *str, int n, int k);
 	PolizElem *EvaluateFun(Stack<PolizElem> &stack) const;
-	char *GetName() const;
-	int GetLineNumber() const;
-	int GetArgc() const;
-	~PolizOpDefFunction();
 };
 
 

@@ -13,26 +13,28 @@ class LabelTableRow
 
 public:
 	LabelTableRow(char *str, PolizList *p);
-	char *GetName() const;
-	PolizList *GetAddr() const;
-	LabelTableRow *GetNext() const;
-	void SetAddr(PolizList *p);
-	void SetNext(LabelTableRow *new_row);
 	~LabelTableRow();
+
+	char *GetName() const { return name; }
+	PolizList *GetAddr() const { return addr; }
+	LabelTableRow *GetNext() const { return next; }
+	void SetAddr(PolizList *p) { addr = p; }
+	void SetNext(LabelTableRow *new_row) { next = new_row; }
 };
 
 
 class LabelTable
 {
 	LabelTableRow *table_head;
-	
+
 	static void DeleteLabelTable(LabelTableRow *head);
 
 public:
 	LabelTable();
+	~LabelTable();
+
 	void AddNewLabel(char *str, PolizList *addr1, int n);
 	PolizList *GetLabelAddr(const char *name) const;
-	~LabelTable();
 };
 
 

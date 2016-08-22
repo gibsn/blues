@@ -15,14 +15,12 @@ LabelTable Interpretator::label_table;
 void Interpretator::Run()
 {
 	cur_cmd = poliz_head;
-	
-	try
-	{
+
+	try {
 		while(cur_cmd)
 			cur_cmd->element->Evaluate(poliz_stack, cur_cmd);
 	}
-	catch(const PolizEx& info)
-	{
+	catch(const PolizEx& info) {
 		info.Print();
 		exit(1);
 	}

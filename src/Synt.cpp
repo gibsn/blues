@@ -12,9 +12,11 @@
 
 
 SyntAnalyser::SyntAnalyser()
+	: current_lexeme(0),
+	poliz_head(0),
+	poliz_last(0),
+	brace_count(0)
 {
-	brace_count = 0;
-	poliz_head = 0;
 }
 
 
@@ -38,13 +40,11 @@ void SyntAnalyser::GetNextLexeme()
 
 void SyntAnalyser::Run(Lexeme *head)
 {
-	try
-	{
+	try {
 		LoadFirstLexeme(head);
 		S();
 	}
-	catch(const Exception& info)
-	{
+	catch(const Exception& info) {
 		info.Print();
 		exit(0);
 	}
@@ -54,7 +54,8 @@ void SyntAnalyser::Run(Lexeme *head)
 void SyntAnalyser::S()
 {
 	B();
-	if (current_lexeme != 0)
+
+	if (current_lexeme)
 		throw NotWhatExpected("EOF", current_lexeme->string,
 			current_lexeme->line_number);
 }
@@ -62,8 +63,7 @@ void SyntAnalyser::S()
 
 void SyntAnalyser::B()
 {
-	if (strcmp("{", current_lexeme->string))
-	{
+	if (strcmp("{", current_lexeme->string)) {
 		if (!brace_count)
 			throw NotWhatExpected("{", current_lexeme->string,
 				current_lexeme->line_number);
@@ -71,11 +71,14 @@ void SyntAnalyser::B()
 			throw UnknownLexeme(current_lexeme->string,
 				current_lexeme->line_number);
 	}
+
 	brace_count++;
 	GetNextLexeme();
 	Main();
+
 	while(strcmp("}", current_lexeme->string))
 		Main();
+
 	brace_count--;
 	GetNextLexeme();
 }
@@ -83,20 +86,22 @@ void SyntAnalyser::B()
 
 void SyntAnalyser::Main()
 {
-	if (current_lexeme->string[0] == '@')
-	{
+	if (current_lexeme->string[0] == '@') {
 		if (!strcmp("@",current_lexeme->string))
 			throw EmptyLabelName(current_lexeme->line_number);
+
 		AddNewPolizElem(new PolizOpNOP);
 		Interpretator::label_table.AddNewLabel(current_lexeme->string,
 			poliz_last, current_lexeme->line_number);
 		GetNextLexeme();
+
 		if (strcmp(":", current_lexeme->string))
 			throw NotWhatExpected(":", current_lexeme->string,
 				current_lexeme->line_number);
 		GetNextLexeme();
 	}
-		Operator();
+
+	Operator();
 }
 
 
@@ -104,17 +109,11 @@ void SyntAnalyser::Operator()
 {
 	if (!strcmp("if", current_lexeme->string))
 		If();
-	else
-	if (current_lexeme->string[0] == '$')
+	else if (current_lexeme->string[0] == '$')
 		Assignment();
-	else
-	if (!strcmp("goto", current_lexeme->string))
+	else if (!strcmp("goto", current_lexeme->string))
 		Goto();
-	else
-	if (IsIntegratedOperator(current_lexeme->string))
-		IntegratedOperators();
-	else
-	if (!strcmp("print", current_lexeme->string))
+	else if (!strcmp("print", current_lexeme->string))
 		Print();
 	else
 		B();
@@ -132,20 +131,20 @@ void SyntAnalyser::If()
 	AddNewPolizElem(tmp_label1);
 	AddNewPolizElem(new PolizOpGoFalse);
 	Operator();
-	if (!strcmp("else", current_lexeme->string))
-	{
+	if (!strcmp("else", current_lexeme->string)) {
 		tmp_label2 = new PolizLabel(0, 0, 0);
+
 		AddNewPolizElem(tmp_label2);
 		AddNewPolizElem(new PolizOpGo);
 		AddNewPolizElem(new PolizOpNOP);
+
 		tmp_label1->SetAddr(poliz_last);
 		GetNextLexeme();
 		Operator();
+
 		AddNewPolizElem(new PolizOpNOP);
 		tmp_label2->SetAddr(poliz_last);
-	}
-	else
-	{
+	} else {
 		AddNewPolizElem(new PolizOpNOP);
 		tmp_label1->SetAddr(poliz_last);
 	}
@@ -155,10 +154,13 @@ void SyntAnalyser::If()
 void SyntAnalyser::Assignment()
 {
 	Variable();
+
 	if (strcmp("=", current_lexeme->string))
 		throw NotWhatExpected("=", current_lexeme->string,
 			current_lexeme->line_number);
+
 	GetNextLexeme();
+
 	Expression();
 	AddNewPolizElem(new PolizOpAssign);
 }
@@ -167,97 +169,18 @@ void SyntAnalyser::Assignment()
 void SyntAnalyser::Goto()
 {
 	GetNextLexeme();
+
 	if (current_lexeme->string[0] != '@')
 		throw NotWhatExpected("label", current_lexeme->string,
 			current_lexeme->line_number);
+
 	if (!strcmp("@",current_lexeme->string))
 		throw EmptyLabelName(current_lexeme->line_number);
+
 	AddNewPolizElem(new PolizLabel(current_lexeme->string, 0,
 		current_lexeme->line_number));
 	AddNewPolizElem(new PolizOpGo);
-	GetNextLexeme();
-}
 
-
-void SyntAnalyser::IntegratedOperators()
-{
-	if (!strcmp("turn", current_lexeme->string))
-	{
-		AddNewPolizElem(new PolizTurn);
-		GetNextLexeme();
-	}
-	else
-	if (!strcmp("build", current_lexeme->string))
-	{
-		AddNewPolizElem(new PolizBuild);
-		GetNextLexeme();
-	}
-	else
-	if (!strcmp("prod",  current_lexeme->string))
-		Prod();
-	else
-	if (!strcmp("buy",  current_lexeme->string))
-		Buy();
-	else
-	if (!strcmp("sell", current_lexeme->string))
-		Sell();
-}
-
-
-void SyntAnalyser::Prod()
-{
-	GetNextLexeme();
-	if (strcmp("(", current_lexeme->string))
-		throw NotWhatExpected("(", current_lexeme->string,
-			current_lexeme->line_number);
-	GetNextLexeme();
-	Expression();
-	if (strcmp(")", current_lexeme->string))
-		throw NotWhatExpected(")", current_lexeme->string,
-			current_lexeme->line_number);
-	AddNewPolizElem(new PolizProd);
-	GetNextLexeme();
-}
-
-
-void SyntAnalyser::Buy()
-{
-	GetNextLexeme();
-	if (strcmp("(", current_lexeme->string))
-		throw NotWhatExpected("(", current_lexeme->string,
-			current_lexeme->line_number);
-	GetNextLexeme();
-	Expression();
-	if (strcmp(",", current_lexeme->string))
-		throw NotWhatExpected(",", current_lexeme->string,
-			current_lexeme->line_number);
-	GetNextLexeme();
-	Expression();
-	if (strcmp(")", current_lexeme->string))
-		throw NotWhatExpected(")", current_lexeme->string,
-			current_lexeme->line_number);
-	AddNewPolizElem(new PolizBuy);
-	GetNextLexeme();
-}
-
-
-void SyntAnalyser::Sell()
-{
-	GetNextLexeme();
-	if (strcmp("(", current_lexeme->string))
-		throw NotWhatExpected("(", current_lexeme->string,
-			current_lexeme->line_number);
-	GetNextLexeme();
-	Expression();
-	if (strcmp(",", current_lexeme->string))
-		throw NotWhatExpected(",", current_lexeme->string,
-			current_lexeme->line_number);
-	GetNextLexeme();
-	Expression();
-	if (strcmp(")", current_lexeme->string))
-		throw NotWhatExpected(")", current_lexeme->string,
-			current_lexeme->line_number);
-	AddNewPolizElem(new PolizSell);
 	GetNextLexeme();
 }
 
@@ -270,17 +193,19 @@ void SyntAnalyser::Print()
 	if (strcmp("(", current_lexeme->string))
 		throw NotWhatExpected("(", current_lexeme->string,
 			current_lexeme->line_number);
+
 	GetNextLexeme();
 	PrintArgument();
-	while(!strcmp(",", current_lexeme->string))
-	{
+	while(!strcmp(",", current_lexeme->string)) {
 		argc++;
 		GetNextLexeme();
 		PrintArgument();
 	}
+
 	if (strcmp(")", current_lexeme->string))
 		throw NotWhatExpected(")", current_lexeme->string,
 			current_lexeme->line_number);
+
 	AddNewPolizElem(new PolizPrint(argc));
 	GetNextLexeme();
 }
@@ -288,64 +213,63 @@ void SyntAnalyser::Print()
 
 void SyntAnalyser::PrintArgument()
 {
-	if (current_lexeme->string[0] == '"')
-	{
+	if (current_lexeme->string[0] == '"') {
 		AddNewPolizElem(new PolizStr(current_lexeme->string));
 		GetNextLexeme();
-	}
-	else
+	} else {
 		Expression();
+	}
 }
 
 
-void SyntAnalyser::Function()
-{
-	int argc = 0;
- 	Lexeme *tmp;
- 	PolizOpDefFunction *func;
-
-	tmp = current_lexeme;
-	if (!strcmp("?", tmp->string))
-		throw EmptyFunctionName(tmp->line_number);
-	GetNextLexeme();
-	if (!strcmp("(", current_lexeme->string))
-	{
-		argc++;
-		GetNextLexeme();
-		Expression();
-		while(!strcmp(",", current_lexeme->string))
-		{
-			argc++;
-			GetNextLexeme();
-			Expression();
-		}
-		if (strcmp(")", current_lexeme->string))
-			throw NotWhatExpected(")", current_lexeme->string,
-				current_lexeme->line_number);
-		GetNextLexeme();
-	}
-	func = new PolizOpDefFunction(tmp->string, tmp->line_number,argc);
-	CheckFuncArgc(func);
-	AddNewPolizElem(func);
-}
+// void SyntAnalyser::Function()
+// {
+// 	int argc = 0;
+//  	Lexeme *tmp;
+//  	PolizOpDefFunction *func;
+//
+// 	tmp = current_lexeme;
+// 	if (!strcmp("?", tmp->string))
+// 		throw EmptyFunctionName(tmp->line_number);
+//
+// 	GetNextLexeme();
+// 	if (!strcmp("(", current_lexeme->string)) {
+// 		argc++;
+// 		GetNextLexeme();
+// 		Expression();
+// 		while(!strcmp(",", current_lexeme->string)) {
+// 			argc++;
+// 			GetNextLexeme();
+// 			Expression();
+// 		}
+//
+// 		if (strcmp(")", current_lexeme->string))
+// 			throw NotWhatExpected(")", current_lexeme->string,
+// 				current_lexeme->line_number);
+//
+// 		GetNextLexeme();
+// 	}
+//
+// 	func = new PolizOpDefFunction(tmp->string, tmp->line_number,argc);
+// 	CheckFuncArgc(func);
+// 	AddNewPolizElem(func);
+// }
 
 
 void SyntAnalyser::Expression()
 {
 	Expression1();
-	if (IsComparison(current_lexeme->string))
-	{
+	if (IsComparison(current_lexeme->string)) {
 		char *comparison_type = current_lexeme->string;
 
 		GetNextLexeme();
 		Expression1();
+
 		if (!strcmp("<", comparison_type))
 			AddNewPolizElem(new PolizOpLess);
-		else
-		if (!strcmp("=", comparison_type))
+		else if (!strcmp("=", comparison_type))
 			AddNewPolizElem(new PolizOpEqual);
-		else
-		if (!strcmp(">", comparison_type))
+		else if (!strcmp(">", comparison_type))
 			AddNewPolizElem(new PolizOpGreater);
 	}
 }
@@ -363,14 +287,14 @@ void SyntAnalyser::Expression1()
 	{
 		GetNextLexeme();
 		T();
+
 		if (!strcmp("+", operation_type))
 			AddNewPolizElem(new PolizOpPlus);
-		else
-		if (!strcmp("-", operation_type))
+		else if (!strcmp("-", operation_type))
 			AddNewPolizElem(new PolizOpMinus);
-		else
-		if (!strcmp("|", operation_type))
+		else if (!strcmp("|", operation_type))
 			AddNewPolizElem(new PolizOpOr);
+
 		operation_type = current_lexeme->string;
 	}
 }
@@ -381,6 +305,7 @@ void SyntAnalyser::T()
 	F();
 
 	char *operation_type = current_lexeme->string;
+
 	while(  !strcmp("*", operation_type) ||
 			!strcmp("/", operation_type) ||
 			!strcmp("&", operation_type) )
@@ -389,12 +314,11 @@ void SyntAnalyser::T()
 		F();
 		if (!strcmp("*", operation_type))
 			AddNewPolizElem(new PolizOpMultiply);
-		else
-		if (!strcmp("/", operation_type))
+		else if (!strcmp("/", operation_type))
 			AddNewPolizElem(new PolizOpDivide);
-		else
-		if (!strcmp("&", operation_type))
+		else if (!strcmp("&", operation_type))
 			AddNewPolizElem(new PolizOpAnd);
+
 		operation_type = current_lexeme->string;
 	}
 }
@@ -402,56 +326,44 @@ void SyntAnalyser::T()
 
 void SyntAnalyser::F()
 {
-	if (!strcmp("!", current_lexeme->string))
-	{
+	if (!strcmp("!", current_lexeme->string)) {
 		GetNextLexeme();
 		F1();
 		AddNewPolizElem(new PolizOpNot);
-	}
-	else
-	if (!strcmp("-", current_lexeme->string))
-	{
+	} else if (!strcmp("-", current_lexeme->string)) {
 		GetNextLexeme();
 		F1();
 		AddNewPolizElem(new PolizOpUnMinus);
-	}
-	else
+	} else {
 		F1();
+	}
 }
 
 
 void SyntAnalyser::F1()
 {
-	if (!strcmp("(", current_lexeme->string))
-	{
+	if (!strcmp("(", current_lexeme->string)) {
 		GetNextLexeme();
 		Expression();
+
 		if (strcmp(")", current_lexeme->string))
 			throw NotWhatExpected(")", current_lexeme->string,
 				current_lexeme->line_number);
+
 		GetNextLexeme();
-	}
-	else
-	if (current_lexeme->string[0] == '?')
-		Function();
-	else
-	if (current_lexeme->string[0] == '$' )
-	{
+	} else if (current_lexeme->string[0] == '$' ) {
 		Variable();
-		AddNewPolizElem(new PolizOpDereference(current_lexeme->line_number));
-	}
-	else
-	if (current_lexeme->type == num)
-	{
+		AddNewPolizElem(new PolizOpDereference());
+	} else if (current_lexeme->type == num) {
 		int val;
 
 		sscanf(current_lexeme->string, "%d", &val);
 		AddNewPolizElem(new PolizInt(val));
 		GetNextLexeme();
-	}
-	else
+	} else {
 		throw NotWhatExpected("expression", current_lexeme->string,
 			current_lexeme->line_number);
+	}
 }
 
 
@@ -460,18 +372,22 @@ void SyntAnalyser::Variable()
 	if (current_lexeme->string[0] != '$')
 		throw NotWhatExpected("variable", current_lexeme->string,
 			current_lexeme->line_number);
+
 	if (!strcmp("$",current_lexeme->string))
 		throw EmptyVarName(current_lexeme->line_number);
+
 	AddNewPolizElem(new PolizVar(current_lexeme->string,
 		current_lexeme->line_number));
 	GetNextLexeme();
-	if (!strcmp("[", current_lexeme->string))
-	{
+
+	if (!strcmp("[", current_lexeme->string)) {
 		GetNextLexeme();
 		Expression();
+
 		if (strcmp("]", current_lexeme->string))
 			throw NotWhatExpected("]", current_lexeme->string,
 				current_lexeme->line_number);
+
 		AddNewPolizElem(new PolizOpIndex);
 		GetNextLexeme();
 	}
@@ -485,13 +401,11 @@ void SyntAnalyser::AddNewPolizElem(PolizElem *new_elem)
 	tmp = new PolizList;
 	tmp->element = new_elem;
 	tmp->next = 0;
-	if (!poliz_head)
-	{
+
+	if (!poliz_head) {
 		poliz_head = tmp;
 		poliz_last = poliz_head;
-	}
-	else
-	{
+	} else {
 		poliz_last->next = tmp;
 		poliz_last = poliz_last->next;
 	}
@@ -501,8 +415,7 @@ void SyntAnalyser::AddNewPolizElem(PolizElem *new_elem)
 
 void SyntAnalyser::DeletePolizList(PolizList *head)
 {
-	if (head)
-	{
+	if (head) {
 		DeletePolizList(head->next);
 		delete head;
 	}

@@ -7,6 +7,7 @@ struct PolizList;
 struct Lexeme;
 
 
+//see the grammar in the project folder
 class SyntAnalyser
 {
 	Lexeme *current_lexeme;
@@ -18,11 +19,10 @@ class SyntAnalyser
 	void B();
 	void Main();
 	void Operator();
-	void IntegratedOperators();
 	void Prod();
 	void Buy();
 	void Sell();
-	void Function();
+	// void Function();
 	void If();
 	void Assignment();
 	void Goto();
@@ -43,9 +43,11 @@ class SyntAnalyser
 
 public:
 	SyntAnalyser();
-	void Run(Lexeme *head);
-	PolizList *GetPolizHead() { return poliz_head; }
 	~SyntAnalyser();
+
+	PolizList *GetPolizHead() { return poliz_head; }
+
+	void Run(Lexeme *head);
 };
 
 
